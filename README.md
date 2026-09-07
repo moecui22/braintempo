@@ -25,20 +25,16 @@ This one only knows one person. ⌨️
 
 Type the words as they scroll. No punctuation, no capitals. 15, 30 or 60 seconds.
 
-**Net WPM** — correct characters only. The number most tests quietly round up.
+| Measure | What it is | Why it is there |
+|---|---|---|
+| **Net WPM** | Correct characters only | The number most tests quietly round up |
+| **Accuracy** | Right keys as a share of all keys | Judged character by character — no dictionary, no spell check |
+| **Rhythm steadiness** | The spread of your keystroke gaps | Carries more signal than raw speed |
+| **Hesitations** | Pauses over half a second, per 100 keys | The one that moves when you are tired |
 
-**Accuracy** — right keystrokes as a share of all of them. No dictionary, no spell
-check; correctness is decided character by character against the word on screen.
-
-**Rhythm steadiness** — the spread of the gaps between your keystrokes. Carries
-more signal than raw speed does.
-
-**Hesitations** — pauses over half a second, per hundred keys. This is the one
-that moves when you are tired.
-
-There is a combo counter, XP, levels, a day streak, 12 achievements and a daily
-challenge. None of it touches the measurement. It exists so you come back
-tomorrow, which is the only way any of this works. 🔥
+Combo counter, XP, levels, a day streak, 12 achievements, a daily challenge.
+None of it touches the measurement. It exists so you come back tomorrow, which
+is the only way any of this works. 🔥
 
 ## ⏳ Then it makes you wait
 

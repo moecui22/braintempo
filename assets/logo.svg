@@ -1,16 +1,33 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512" role="img" aria-label="braintempo">
   <title>braintempo</title>
-  <!-- Apple-style rounded tile in Action Blue #0066cc -->
+  <!-- Apple-style rounded tile in Action Blue -->
   <rect width="512" height="512" rx="114" ry="114" fill="#0066cc"/>
-  <!-- Five keystroke bars on a common baseline: the tempo of typing,
-       with the tallest doubling as a text caret. -->
-  <g fill="#ffffff">
-    <rect x="104" y="272" width="44" height="100" rx="22" opacity=".5"/>
-    <rect x="168" y="192" width="44" height="180" rx="22" opacity=".72"/>
-    <rect x="232" y="122" width="44" height="250" rx="22"/>
-    <rect x="296" y="222" width="44" height="150" rx="22" opacity=".72"/>
-    <rect x="360" y="282" width="44" height="90"  rx="22" opacity=".5"/>
+
+  <!-- brain -->
+  <path fill="#ffffff" d="
+    M256 92
+    C298 74, 344 88, 358 122
+    C392 130, 402 170, 383 196
+    C393 226, 370 258, 335 262
+    C318 283, 283 287, 256 276
+    C229 287, 194 283, 177 262
+    C142 258, 119 226, 129 196
+    C110 170, 120 130, 154 122
+    C168 88, 214 74, 256 92 Z"/>
+  <!-- sulci, cut in the tile colour so they read as folds -->
+  <g fill="none" stroke="#0066cc" stroke-width="15" stroke-linecap="round">
+    <path d="M256 100 C246 140, 264 166, 248 200 C236 230, 262 252, 256 276"/>
+    <path d="M212 124 C194 152, 204 178, 176 196"/>
+    <path d="M300 124 C318 152, 308 178, 336 196"/>
+    <path d="M206 232 C224 240, 230 254, 214 264"/>
+    <path d="M306 232 C288 240, 282 254, 298 264"/>
   </g>
-  <!-- baseline: the thing every reading is measured against -->
-  <rect x="104" y="398" width="300" height="12" rx="6" fill="#ffffff" opacity=".45"/>
+
+  <!-- keyboard: three keys and a spacebar -->
+  <g fill="#ffffff">
+    <rect x="146" y="330" width="68" height="56" rx="16"/>
+    <rect x="222" y="330" width="68" height="56" rx="16"/>
+    <rect x="298" y="330" width="68" height="56" rx="16"/>
+    <rect x="146" y="398" width="220" height="40" rx="20" opacity=".62"/>
+  </g>
 </svg>
