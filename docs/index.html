@@ -1,0 +1,937 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>braintempo — typing test with a personal baseline</title>
+<meta name="description" content="A no-punctuation typing test that tracks your speed, correct speed and rhythm, then compares today against your own baseline.">
+<style>
+:root{
+  color-scheme: dark;
+  --bg:#121211; --surface-1:#1a1a19; --surface-2:#232322; --surface-3:#2b2b29;
+  --border:#333331; --grid:#2a2a28;
+  --text-primary:#ffffff; --text-secondary:#c3c2b7; --text-muted:#87867d;
+  --series-1:#3987e5; --series-2:#d95926;
+  --good:#0ca30c; --warning:#fab219; --serious:#ec835a; --critical:#d03b3b;
+  --untyped:#6a6a62; --caret:#3987e5;
+  --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+  --sans: ui-sans-serif, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+:root[data-theme="light"]{
+  color-scheme: light;
+  --bg:#f6f5f2; --surface-1:#fcfcfb; --surface-2:#f0efec; --surface-3:#e6e5e1;
+  --border:#dcdbd6; --grid:#e6e5e1;
+  --text-primary:#0b0b0b; --text-secondary:#52514e; --text-muted:#75746f;
+  --series-1:#2a78d6; --series-2:#eb6834;
+  --untyped:#a8a7a1; --caret:#2a78d6;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  background:var(--bg); color:var(--text-primary);
+  font-family:var(--sans); font-size:15px; line-height:1.55;
+  -webkit-font-smoothing:antialiased;
+}
+.wrap{max-width:920px;margin:0 auto;padding:20px 20px 64px}
+a{color:var(--series-1)}
+
+/* ---------- header ---------- */
+header{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;margin-bottom:18px}
+.brand{font-size:20px;font-weight:650;letter-spacing:-.01em}
+.brand span{color:var(--series-1)}
+.tagline{color:var(--text-muted);font-size:13px;flex:1;min-width:200px}
+button{font-family:inherit;font-size:13px;cursor:pointer}
+.btn{
+  background:var(--surface-2); color:var(--text-secondary);
+  border:1px solid var(--border); border-radius:8px; padding:6px 11px;
+}
+.btn:hover{background:var(--surface-3);color:var(--text-primary)}
+.btn.on{background:var(--series-1);border-color:var(--series-1);color:#fff}
+
+/* ---------- hud ---------- */
+.hud{
+  display:flex;gap:10px;flex-wrap:wrap;align-items:center;
+  background:var(--surface-1);border:1px solid var(--border);border-radius:12px;
+  padding:12px 14px;margin-bottom:14px;
+}
+.hud-item{display:flex;flex-direction:column;gap:1px;min-width:70px}
+.hud-k{font-size:10.5px;text-transform:uppercase;letter-spacing:.07em;color:var(--text-muted)}
+.hud-v{font-size:16px;font-weight:640;font-variant-numeric:tabular-nums}
+.xpwrap{flex:1;min-width:150px}
+.xpbar{height:7px;background:var(--surface-3);border-radius:99px;overflow:hidden;margin-top:5px}
+.xpfill{height:100%;background:var(--series-1);border-radius:99px;transition:width .5s ease}
+
+/* ---------- controls ---------- */
+.controls{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px}
+.seg{display:flex;gap:0;border:1px solid var(--border);border-radius:8px;overflow:hidden}
+.seg button{background:var(--surface-1);color:var(--text-secondary);border:0;padding:6px 13px;border-right:1px solid var(--border)}
+.seg button:last-child{border-right:0}
+.seg button.on{background:var(--series-1);color:#fff}
+.spacer{flex:1}
+
+/* ---------- test ---------- */
+.card{background:var(--surface-1);border:1px solid var(--border);border-radius:14px;padding:18px}
+.livebar{display:flex;gap:22px;align-items:baseline;margin-bottom:14px;flex-wrap:wrap}
+.live-v{font-size:26px;font-weight:670;font-variant-numeric:tabular-nums;letter-spacing:-.02em}
+.live-k{font-size:10.5px;text-transform:uppercase;letter-spacing:.07em;color:var(--text-muted)}
+#combo{color:var(--text-muted);transition:color .2s}
+#combo.hot{color:var(--warning)}
+#combo.blaze{color:var(--serious)}
+
+.words{
+  font-family:var(--mono); font-size:23px; line-height:1.62;
+  height:calc(1.62em * 3); overflow:hidden; position:relative;
+  color:var(--untyped); outline:none; user-select:none; cursor:text;
+}
+.words .inner{position:absolute;top:0;left:0;right:0;transition:transform .12s ease}
+.w{display:inline-block;margin-right:.55em;position:relative;white-space:nowrap}
+.c.ok{color:var(--text-primary)}
+.c.bad{color:var(--critical);text-decoration:underline;text-decoration-thickness:2px;text-underline-offset:3px}
+.c.extra{color:var(--critical);opacity:.62}
+.w.done.miss{text-decoration:underline;text-decoration-color:var(--critical);text-decoration-thickness:1px;text-underline-offset:6px}
+.caret{
+  position:absolute;width:2px;background:var(--caret);border-radius:2px;
+  height:1.15em;transition:left .06s linear, top .06s linear;
+}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.15}}
+.caret.idle{animation:blink 1.05s infinite}
+.blurred .inner{filter:blur(3.5px);opacity:.55}
+.focusnote{
+  position:absolute;inset:0;display:none;align-items:center;justify-content:center;
+  font-family:var(--sans);font-size:14px;color:var(--text-secondary);
+}
+.blurred .focusnote{display:flex}
+.hint{margin-top:12px;font-size:12.5px;color:var(--text-muted)}
+kbd{
+  font-family:var(--mono);font-size:11px;background:var(--surface-3);
+  border:1px solid var(--border);border-radius:4px;padding:1px 5px;
+}
+
+/* ---------- generic section ---------- */
+section{margin-top:22px}
+h2{font-size:15px;font-weight:640;margin:0 0 3px;letter-spacing:-.01em}
+.sub{font-size:12.5px;color:var(--text-muted);margin:0 0 13px}
+
+/* ---------- stat tiles ---------- */
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(132px,1fr));gap:10px}
+.tile{background:var(--surface-2);border:1px solid var(--border);border-radius:11px;padding:12px 13px}
+.tile-k{font-size:10.5px;text-transform:uppercase;letter-spacing:.07em;color:var(--text-muted)}
+.tile-v{font-size:27px;font-weight:670;font-variant-numeric:tabular-nums;letter-spacing:-.02em;line-height:1.18}
+.tile-v small{font-size:13px;font-weight:520;color:var(--text-muted);letter-spacing:0}
+.tile-n{font-size:11.5px;color:var(--text-muted);margin-top:2px}
+.tile.hero{background:var(--surface-1);border-width:1px}
+.tile.hero .tile-v{font-size:38px}
+
+/* ---------- verdict ---------- */
+.verdict{display:flex;align-items:flex-start;gap:10px;margin-top:12px;
+  background:var(--surface-2);border:1px solid var(--border);border-radius:11px;padding:12px 14px}
+.dot{width:11px;height:11px;border-radius:50%;flex:0 0 auto;margin-top:5px}
+.verdict-t{font-weight:620}
+.verdict-d{font-size:12.5px;color:var(--text-secondary)}
+
+/* ---------- charts ---------- */
+.chart{position:relative;margin-top:12px}
+svg{display:block;width:100%;height:auto;overflow:visible}
+.axis-line{stroke:var(--border);stroke-width:1}
+.gridline{stroke:var(--grid);stroke-width:1}
+.tick{fill:var(--text-muted);font-size:10.5px;font-family:var(--sans)}
+.slabel{font-size:11.5px;font-weight:600;font-family:var(--sans)}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--text-secondary);margin-bottom:2px}
+.legend i{display:inline-block;width:11px;height:11px;border-radius:3px;margin-right:5px;vertical-align:-1px}
+.tip{
+  position:absolute;pointer-events:none;opacity:0;transition:opacity .1s;
+  background:var(--surface-3);border:1px solid var(--border);border-radius:8px;
+  padding:7px 9px;font-size:12px;white-space:nowrap;z-index:5;
+  box-shadow:0 4px 14px rgba(0,0,0,.28);
+}
+.tip b{font-variant-numeric:tabular-nums}
+.empty{color:var(--text-muted);font-size:13px;padding:16px 0}
+table{border-collapse:collapse;width:100%;font-size:12.5px;margin-top:10px}
+th,td{text-align:right;padding:5px 8px;border-bottom:1px solid var(--border);font-variant-numeric:tabular-nums}
+th:first-child,td:first-child{text-align:left}
+th{color:var(--text-muted);font-weight:560;font-size:11px;text-transform:uppercase;letter-spacing:.05em}
+.linkish{background:none;border:0;color:var(--series-1);padding:0;font-size:12px;text-decoration:underline;cursor:pointer}
+
+/* ---------- achievements ---------- */
+.ach{display:flex;flex-wrap:wrap;gap:8px}
+.badge{
+  display:flex;align-items:center;gap:7px;background:var(--surface-2);
+  border:1px solid var(--border);border-radius:9px;padding:7px 11px;font-size:12.5px;
+}
+.badge.locked{opacity:.4}
+.badge .ic{font-size:15px;line-height:1}
+.badge b{font-weight:600}
+.badge span{color:var(--text-muted)}
+.toast{
+  position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(14px);
+  background:var(--surface-3);border:1px solid var(--warning);border-radius:11px;
+  padding:11px 16px;font-size:13.5px;opacity:0;transition:all .32s ease;z-index:50;
+  box-shadow:0 6px 22px rgba(0,0,0,.35);
+}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+footer{margin-top:34px;padding-top:16px;border-top:1px solid var(--border);
+  font-size:12.5px;color:var(--text-muted);display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+@media (max-width:560px){
+  .words{font-size:19px}
+  .tile.hero .tile-v{font-size:31px}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <div class="brand">brain<span>tempo</span></div>
+  <div class="tagline">A no-punctuation typing test that measures your rhythm, then compares today against your own baseline.</div>
+  <button class="btn" id="themeBtn" aria-label="Toggle colour theme">Light</button>
+</header>
+
+<div class="hud">
+  <div class="hud-item"><div class="hud-k">Level</div><div class="hud-v" id="hudLevel">1</div></div>
+  <div class="hud-item xpwrap">
+    <div class="hud-k">XP <span id="hudXpText" style="color:var(--text-muted);text-transform:none;letter-spacing:0"></span></div>
+    <div class="xpbar"><div class="xpfill" id="hudXp" style="width:0%"></div></div>
+  </div>
+  <div class="hud-item"><div class="hud-k">Day streak</div><div class="hud-v" id="hudStreak">0</div></div>
+  <div class="hud-item"><div class="hud-k">Best net</div><div class="hud-v" id="hudBest">—</div></div>
+  <div class="hud-item"><div class="hud-k">Tests</div><div class="hud-v" id="hudRuns">0</div></div>
+</div>
+
+<div class="controls">
+  <div class="seg" id="durSeg">
+    <button data-dur="15">15s</button><button data-dur="30" class="on">30s</button><button data-dur="60">60s</button>
+  </div>
+  <div class="seg" id="modeSeg">
+    <button data-mode="random" class="on">Random</button><button data-mode="daily">Daily challenge</button>
+  </div>
+  <div class="spacer"></div>
+  <button class="btn" id="restartBtn">Restart <kbd>Tab</kbd></button>
+</div>
+
+<div class="card">
+  <div class="livebar">
+    <div><div class="live-v" id="liveTime">30</div><div class="live-k">Seconds left</div></div>
+    <div><div class="live-v" id="liveWpm">0</div><div class="live-k">Net WPM</div></div>
+    <div><div class="live-v" id="liveAcc">100<small style="font-size:14px">%</small></div><div class="live-k">Accuracy</div></div>
+    <div><div class="live-v" id="combo">0</div><div class="live-k">Combo</div></div>
+  </div>
+  <div class="words" id="words" tabindex="0">
+    <div class="inner" id="inner"></div>
+    <div class="caret idle" id="caret"></div>
+    <div class="focusnote">Click here to focus</div>
+  </div>
+  <div class="hint" id="hint">Just start typing. <kbd>Tab</kbd> restarts, <kbd>Esc</kbd> resets everything about this run.</div>
+</div>
+
+<section id="resultSec" hidden>
+  <h2>This run</h2>
+  <p class="sub" id="resultSub"></p>
+  <div class="tiles" id="resultTiles"></div>
+  <div id="verdictBox"></div>
+
+  <div class="chart" style="margin-top:18px">
+    <div class="legend">
+      <span><i style="background:var(--series-1)"></i>Net WPM (correct characters only)</span>
+      <span><i style="background:var(--series-2)"></i>Raw WPM (everything you typed)</span>
+    </div>
+    <div id="speedChart"></div>
+    <div class="tip" id="speedTip"></div>
+  </div>
+  <div class="ach" id="runAch" style="margin-top:16px"></div>
+</section>
+
+<section id="analysisSec">
+  <h2>Your baseline</h2>
+  <p class="sub" id="analysisSub">Play a few times and this fills in.</p>
+  <div id="analysisBody"></div>
+</section>
+
+<section id="historySec" hidden>
+  <h2>History</h2>
+  <p class="sub">Median net WPM per day. The band is your baseline range, so a point outside it is a genuinely unusual day.</p>
+  <div class="chart">
+    <div id="historyChart"></div>
+    <div class="tip" id="historyTip"></div>
+  </div>
+  <button class="linkish" id="histTableBtn">Show the numbers</button>
+  <div id="histTable" hidden></div>
+</section>
+
+<section id="keysSec" hidden>
+  <h2>Slowest keys</h2>
+  <p class="sub">Median time from the previous key to this one, across every test you have finished. Long bars are the keys costing you speed.</p>
+  <div class="chart">
+    <div id="keysChart"></div>
+    <div class="tip" id="keysTip"></div>
+  </div>
+  <button class="linkish" id="keysTableBtn">Show the numbers</button>
+  <div id="keysTable" hidden></div>
+</section>
+
+<section>
+  <h2>Achievements</h2>
+  <p class="sub" id="achSub"></p>
+  <div class="ach" id="allAch"></div>
+</section>
+
+<footer>
+  <span>Everything stays in this browser. No account, no server, no analytics.</span>
+  <span class="spacer"></span>
+  <button class="linkish" id="exportBtn">Export CSV</button>
+  <button class="linkish" id="exportJsonBtn">Export JSON</button>
+  <button class="linkish" id="resetBtn">Erase my data</button>
+</footer>
+
+</div>
+<div class="toast" id="toast"></div>
+<script>
+(function(){
+'use strict';
+
+/* ============================ word list ============================ */
+var RAW = "the be to of and a in that have it for not on with he as you do at this but his by from they we say she or an will my one all would there their what so up out if about who get which go me when make can like time just him know take people into year good some could them see other than now look only come over think back after use two how work first well way even new want because these give day most us is are was were been has had said each much where before right through when much some very man men year day thing life world part place case week word eye door face head hand foot line side room home name kind form sort fact idea book bird tree road town city hill lake ship boat car bus road green white black light dark warm cold high deep long short small large great small quick slow young early late free open close true real full half same next last best next left right north south east west spring water paper table chair window paint music story river field grass stone glass metal cloud storm night morning summer winter number letter market garden window animal orange purple silver golden simple gentle better common modern normal social school study money price value power sound voice music train plane phone screen coffee dinner minute second season office people family friend answer reason moment change public little strong bright quiet clean clear happy heavy empty ready early plenty pretty";
+
+/* ============================ storage ============================ */
+var KEY = 'braintempo.v1';
+var store = load();
+
+function load(){
+  var d = {v:1, runs:[], keyIki:{}, totalXp:0, streak:0, lastDay:null, ach:[], bests:{}};
+  try{
+    var s = localStorage.getItem(KEY);
+    if(s){ var p = JSON.parse(s); for(var k in d){ if(p[k]!==undefined) d[k]=p[k]; } }
+  }catch(e){}
+  return d;
+}
+function save(){ try{ localStorage.setItem(KEY, JSON.stringify(store)); }catch(e){} }
+
+/* ============================ helpers ============================ */
+function $(id){ return document.getElementById(id); }
+function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function clamp(v,a,b){ return v<a?a:(v>b?b:v); }
+function median(a){ if(!a.length) return 0; var s=a.slice().sort(function(x,y){return x-y;}); var m=s.length>>1;
+  return s.length%2 ? s[m] : (s[m-1]+s[m])/2; }
+function quantile(sorted,q){ if(!sorted.length) return 0; if(sorted.length===1) return sorted[0];
+  var p=q*(sorted.length-1), lo=Math.floor(p), hi=Math.ceil(p);
+  return lo===hi ? sorted[lo] : sorted[lo]*(hi-p)+sorted[hi]*(p-lo); }
+function stdev(a){ if(a.length<2) return 0; var m=a.reduce(function(s,v){return s+v;},0)/a.length;
+  return Math.sqrt(a.reduce(function(s,v){return s+(v-m)*(v-m);},0)/(a.length-1)); }
+/* Median and a MAD-based sigma, so one wild day cannot bend the baseline. */
+function robust(vals){
+  var v = vals.filter(function(x){ return typeof x==='number' && isFinite(x); });
+  if(!v.length) return [null,null];
+  var med = median(v);
+  var sig = 1.4826*median(v.map(function(x){ return Math.abs(x-med); }));
+  if(sig<=1e-9 && v.length>1) sig = stdev(v);
+  return [med, sig>1e-9?sig:null];
+}
+function bucketOf(h){ return h<5?'night':(h<12?'morning':(h<17?'afternoon':'evening')); }
+function dayKey(ts){ var d=new Date(ts); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+function mulberry32(a){ return function(){ a|=0; a=a+0x6D2B79F5|0; var t=Math.imul(a^a>>>15,1|a);
+  t=t+Math.imul(t^t>>>7,61|t)^t; return ((t^t>>>14)>>>0)/4294967296; }; }
+
+/* ============================ metric config ============================ */
+/* dir +1 means a bigger number is sharper. Weights sum to 1. */
+var MET = [
+  {k:'net', label:'Net WPM',           dir:+1, w:0.30, unit:'',    dp:1},
+  {k:'cv',  label:'Rhythm steadiness', dir:-1, w:0.30, unit:'',    dp:2},
+  {k:'hes', label:'Hesitations',       dir:-1, w:0.25, unit:'',    dp:1},
+  {k:'acc', label:'Accuracy',          dir:+1, w:0.15, unit:'%',   dp:1}
+];
+var MIN_BASE = 5, BASE_MAX = 30;
+/* A run must clear both gates to count toward anything. */
+var MIN_CHARS = 60, MIN_IKI = 15;
+
+/* ============================ test engine ============================ */
+var WORDLIST = (function(){ var seen={}, out=[];
+  RAW.split(/\s+/).forEach(function(w){ if(w && !seen[w]){ seen[w]=1; out.push(w); } }); return out; })();
+
+var dur = 30, mode = 'random';
+var words = [], typed = [], wi = 0, ci = 0;
+var started = null, endsAt = null, timerId = null, finished = false;
+var strokes = [], combo = 0, maxCombo = 0, typedN = 0, okN = 0;
+var innerEl = $('inner'), caretEl = $('caret'), wordsEl = $('words');
+
+function buildWords(){
+  var rnd = Math.random;
+  if(mode === 'daily'){
+    var d = new Date(), seed = d.getFullYear()*10000 + (d.getMonth()+1)*100 + d.getDate();
+    rnd = mulberry32(seed);
+  }
+  words = []; for(var i=0;i<280;i++) words.push(WORDLIST[Math.floor(rnd()*WORDLIST.length)]);
+  typed = words.map(function(){ return ''; });
+}
+
+function renderAll(){
+  var h = '';
+  for(var i=0;i<words.length;i++) h += '<span class="w" id="w'+i+'">'+wordHtml(i)+'</span>';
+  innerEl.innerHTML = h;
+  innerEl.style.transform = 'translateY(0)';
+}
+function wordHtml(i){
+  var t = words[i], u = typed[i]||'', h = '', n = Math.max(t.length, u.length);
+  for(var j=0;j<n;j++){
+    if(j < u.length){
+      if(j < t.length) h += '<span class="c '+(u[j]===t[j]?'ok':'bad')+'">'+esc(t[j])+'</span>';
+      else h += '<span class="c extra">'+esc(u[j])+'</span>';
+    } else h += '<span class="c">'+esc(t[j])+'</span>';
+  }
+  return h;
+}
+function repaint(i){
+  var el = $('w'+i); if(!el) return;
+  el.innerHTML = wordHtml(i);
+  el.className = 'w' + (i<wi && typed[i]!==words[i] ? ' done miss' : '');
+}
+
+function moveCaret(){
+  var w = $('w'+wi); if(!w) return;
+  var cs = w.children, x, y;
+  if(cs.length === 0){ x = w.offsetLeft; y = w.offsetTop; }
+  else if(ci < cs.length){ x = w.offsetLeft + cs[ci].offsetLeft; y = w.offsetTop + cs[ci].offsetTop; }
+  else { var last = cs[cs.length-1]; x = w.offsetLeft + last.offsetLeft + last.offsetWidth; y = w.offsetTop + last.offsetTop; }
+  var lh = parseFloat(getComputedStyle(wordsEl).lineHeight);
+  var shift = Math.max(0, w.offsetTop - lh);
+  innerEl.style.transform = 'translateY(' + (-shift) + 'px)';
+  caretEl.style.left = x + 'px';
+  caretEl.style.top = (y - shift) + 'px';
+}
+
+function reset(){
+  clearInterval(timerId); timerId = null;
+  wi = 0; ci = 0; started = null; finished = false;
+  strokes = []; combo = 0; maxCombo = 0; typedN = 0; okN = 0;
+  buildWords(); renderAll(); moveCaret();
+  caretEl.classList.add('idle');
+  $('liveTime').textContent = dur; $('liveWpm').textContent = '0';
+  $('liveAcc').innerHTML = '100<small style="font-size:14px">%</small>';
+  setCombo(0);
+  $('resultSec').hidden = true;
+}
+
+function setCombo(v){
+  combo = v; if(v>maxCombo) maxCombo = v;
+  var el = $('combo'); el.textContent = v;
+  el.className = v>=100 ? 'blaze' : (v>=25 ? 'hot' : '');
+}
+
+function start(){
+  started = performance.now(); endsAt = started + dur*1000;
+  caretEl.classList.remove('idle');
+  timerId = setInterval(tick, 100);
+}
+function tick(){
+  var left = Math.max(0, (endsAt - performance.now())/1000);
+  $('liveTime').textContent = Math.ceil(left);
+  var mins = (dur - left)/60;
+  if(mins > 0.004){
+    $('liveWpm').textContent = Math.round((okN/5)/mins);
+    $('liveAcc').innerHTML = (typedN? Math.round(okN/typedN*100):100) + '<small style="font-size:14px">%</small>';
+  }
+  if(left <= 0) finish();
+}
+
+function onKey(e){
+  var t = e.target.tagName;
+  if(t === 'INPUT' || t === 'TEXTAREA') return;
+  if(e.key === 'Tab'){ e.preventDefault(); reset(); return; }
+  if(e.key === 'Escape'){ e.preventDefault(); reset(); return; }
+  if(e.ctrlKey || e.metaKey || e.altKey) return;
+  if(finished) return;
+
+  if(e.key === 'Backspace'){
+    e.preventDefault();
+    if(ci > 0){ typed[wi] = typed[wi].slice(0,-1); ci--; repaint(wi); }
+    else if(wi > 0){ wi--; typed[wi] = typed[wi]; ci = typed[wi].length; repaint(wi); repaint(wi+1); }
+    moveCaret(); return;
+  }
+  if(e.key.length !== 1) return;
+  e.preventDefault();
+  if(!started) start();
+
+  var now = performance.now();
+  if(e.key === ' '){
+    if(ci === 0) return;                 /* ignore a space at the start of a word */
+    strokes.push({t:now, ok:true, ch:' '});
+    typedN++; okN++; setCombo(combo+1);
+    repaint(wi); wi++; ci = 0;
+    if(wi >= words.length-5) { /* ran out of words: extremely fast typist */ finish(); return; }
+    moveCaret(); return;
+  }
+  var target = words[wi], ok = (ci < target.length && e.key === target[ci]);
+  typed[wi] += e.key; ci++;
+  typedN++; if(ok){ okN++; setCombo(combo+1); } else { setCombo(0); }
+  strokes.push({t:now, ok:ok, ch: ci-1 < target.length ? target[ci-1] : null});
+  repaint(wi); moveCaret();
+}
+
+/* ============================ finish & metrics ============================ */
+function finish(){
+  if(finished) return;
+  finished = true; clearInterval(timerId); timerId = null;
+  caretEl.classList.add('idle');
+  var elapsedMin = dur/60;
+
+  var ikis = [];
+  for(var i=1;i<strokes.length;i++) ikis.push((strokes[i].t - strokes[i-1].t)/1000);
+  var fast = ikis.filter(function(v){ return v<=1.0; }).sort(function(a,b){return a-b;});
+  var med = quantile(fast,0.5) || 0.0001;
+  var cv = fast.length>=MIN_IKI ? (quantile(fast,0.75)-quantile(fast,0.25))/med : null;
+  var hes = typedN ? 100*ikis.filter(function(v){ return v>0.5; }).length/typedN : 0;
+
+  var run = {
+    ts: Date.now(), day: dayKey(Date.now()), bucket: bucketOf(new Date().getHours()),
+    dur: dur, mode: mode,
+    raw: (typedN/5)/elapsedMin,
+    net: (okN/5)/elapsedMin,
+    acc: typedN ? okN/typedN*100 : 100,
+    cv: cv, hes: hes, combo: maxCombo, chars: typedN
+  };
+
+  /* A run that barely happened cannot describe anyone's rhythm, and would
+     poison the baseline, the personal bests and the achievements alike.
+     Show the numbers, but keep them out of the record. */
+  run.counted = (typedN >= MIN_CHARS) && (fast.length >= MIN_IKI);
+  if(!run.counted){ showResult(run, {ok:false, short:true, bucket:run.bucket}, []); return; }
+
+  /* per-key timing, for the slowest-keys chart */
+  for(var j=1;j<strokes.length;j++){
+    var s = strokes[j], gap = (s.t - strokes[j-1].t)/1000;
+    if(!s.ok || !s.ch || s.ch===' ' || gap>1.0) continue;
+    var arr = store.keyIki[s.ch] || (store.keyIki[s.ch] = []);
+    arr.push(Math.round(gap*1000));
+    if(arr.length > 200) arr.splice(0, arr.length-200);
+  }
+
+  run.xp = Math.round(run.net * Math.pow(run.acc/100, 2) * (dur/30)) + Math.round(maxCombo/5);
+  store.totalXp += run.xp;
+
+  var today = dayKey(Date.now());
+  if(store.lastDay !== today){
+    var y = dayKey(Date.now() - 86400000);
+    store.streak = (store.lastDay === y) ? store.streak+1 : 1;
+    store.lastDay = today;
+  }
+  if(!store.bests[dur] || run.net > store.bests[dur]) store.bests[dur] = run.net;
+
+  store.runs.push(run);
+  if(store.runs.length > 500) store.runs.splice(0, store.runs.length-500);
+
+  var scored = scoreToday(run);
+  var unlocked = checkAchievements(run, scored);
+  save();
+
+  showResult(run, scored, unlocked);
+  renderHud(); renderAnalysis(); renderHistory(); renderKeys(); renderAllAch();
+}
+
+/* ============================ baseline scoring ============================ */
+function scoreToday(run){
+  var today = run.day;
+  var base = store.runs.filter(function(r){
+    return r.day !== today && r.bucket === run.bucket;
+  }).slice(-BASE_MAX);
+  if(base.length < MIN_BASE) return {ok:false, n:base.length, bucket:run.bucket};
+
+  /* Today's reading is the median of every run in this time-of-day window,
+     so one throwaway attempt cannot decide the verdict. */
+  var mine = store.runs.filter(function(r){ return r.day===today && r.bucket===run.bucket; });
+  var target = {};
+  MET.forEach(function(m){ target[m.k] = median(mine.map(function(r){ return r[m.k]; })); });
+
+  var stats = {}, parts = [];
+  MET.forEach(function(m){
+    var rs = robust(base.map(function(r){ return r[m.k]; }).filter(function(v){ return typeof v==='number' && isFinite(v); }));
+    stats[m.k] = rs;
+    parts.push({m:m, value:target[m.k], base:rs[0], z:zOf(target,m,stats)});
+  });
+  var raw = composite(target, stats);
+  /* Averaging four partly-independent z-scores shrinks the composite's spread,
+     so re-express it in units of its OWN day-to-day variation. */
+  var hist = base.map(function(r){ return composite(r, stats); }).filter(function(v){ return v!==null; });
+  /* Mean and SD, not median and MAD. Each z going into the composite is already
+     clipped to +/-3, so outlier resistance is spent; MAD only adds estimator
+     noise here, and on ~18 days it ran 40% low, which inflated every index. */
+  var hm = hist.reduce(function(a,b){ return a+b; }, 0) / (hist.length||1);
+  var hsd = stdev(hist);
+  var index = (raw===null || hist.length<3 || hsd<=1e-9) ? raw : clamp((raw-hm)/hsd, -4, 4);
+  return {ok:true, n:base.length, bucket:run.bucket, parts:parts, index:index, target:target};
+}
+function zOf(o, m, stats){
+  var s = stats[m.k]; if(!s || s[0]===null || s[1]===null) return null;
+  if(typeof o[m.k] !== 'number' || !isFinite(o[m.k])) return null;
+  return clamp(m.dir * (o[m.k]-s[0]) / s[1], -3, 3);
+}
+function composite(o, stats){
+  var acc=0, tot=0;
+  MET.forEach(function(m){ var z = zOf(o,m,stats); if(z===null) return; acc += z*m.w; tot += m.w; });
+  return tot>0 ? acc/tot : null;
+}
+function band(ix){
+  if(ix >= 1.5) return {t:'A sharp day', d:'Well above your usual for this time of day.', c:'var(--good)'};
+  if(ix >= 0.5) return {t:'A little above your usual', d:'Slightly better than your normal range.', c:'var(--good)'};
+  if(ix > -0.5) return {t:'A typical day', d:'Right inside your normal range.', c:'var(--series-1)'};
+  if(ix > -1.5) return {t:'A little below your usual', d:'Slightly under your normal range.', c:'var(--warning)'};
+  return {t:'A slow day', d:'Well below your usual for this time of day.', c:'var(--serious)'};
+}
+
+/* ============================ chart primitives ============================ */
+var VBW = 880, VBH = 230, PAD = {l:46, r:66, t:16, b:30};
+function niceTicks(lo, hi, n){
+  if(hi-lo < 1e-9){ hi = lo+1; }
+  var span = hi-lo, step = Math.pow(10, Math.floor(Math.log(span/n)/Math.LN10));
+  var err = span/n/step;
+  if(err >= 7.5) step *= 10; else if(err >= 3.5) step *= 5; else if(err >= 1.5) step *= 2;
+  var t = [], s = Math.ceil(lo/step)*step;
+  for(var v=s; v<=hi+1e-9; v+=step) t.push(Math.round(v*1000)/1000);
+  return t;
+}
+function frame(yt, ys, xLabels, xs){
+  var s = '';
+  yt.forEach(function(v){
+    var y = ys(v);
+    s += '<line class="gridline" x1="'+PAD.l+'" x2="'+(VBW-PAD.r)+'" y1="'+y+'" y2="'+y+'"/>';
+    s += '<text class="tick" x="'+(PAD.l-9)+'" y="'+(y+3.5)+'" text-anchor="end">'+v+'</text>';
+  });
+  s += '<line class="axis-line" x1="'+PAD.l+'" x2="'+(VBW-PAD.r)+'" y1="'+(VBH-PAD.b)+'" y2="'+(VBH-PAD.b)+'"/>';
+  xLabels.forEach(function(o){
+    s += '<text class="tick" x="'+o.x+'" y="'+(VBH-PAD.b+16)+'" text-anchor="middle">'+esc(o.t)+'</text>';
+  });
+  return s;
+}
+function path(xs, vals, xsc, ysc){
+  var d = '';
+  for(var i=0;i<vals.length;i++){ if(vals[i]===null) continue;
+    d += (d?'L':'M') + xsc(xs[i]).toFixed(1) + ' ' + ysc(vals[i]).toFixed(1); }
+  return d;
+}
+/* Crosshair + tooltip. An HTML chart is interactive; this ships by default. */
+function attachHover(box, tip, xs, xsc, rowFn){
+  var svg = box.querySelector('svg'), line = box.querySelector('.crosshair');
+  if(!svg) return;
+  function pos(e){
+    var r = svg.getBoundingClientRect(), sc = r.width/VBW;
+    var vx = (e.clientX - r.left)/sc;
+    var bi = 0, bd = Infinity;
+    xs.forEach(function(x,i){ var d = Math.abs(xsc(x)-vx); if(d<bd){ bd=d; bi=i; } });
+    var html = rowFn(bi); if(html===null){ tip.style.opacity = 0; return; }
+    if(line){ line.setAttribute('x1', xsc(xs[bi])); line.setAttribute('x2', xsc(xs[bi])); line.style.opacity = 1; }
+    tip.innerHTML = html; tip.style.opacity = 1;
+    var px = xsc(xs[bi])*sc;
+    tip.style.left = Math.min(Math.max(px - tip.offsetWidth/2, 0), r.width - tip.offsetWidth) + 'px';
+    tip.style.top = '0px';
+  }
+  svg.addEventListener('mousemove', pos);
+  svg.addEventListener('mouseleave', function(){ tip.style.opacity = 0; if(line) line.style.opacity = 0; });
+}
+
+/* ============================ result view ============================ */
+function timeline(){
+  var out = [], sec = [];
+  for(var s=1; s<=dur; s++){
+    var n=0, ok=0;
+    for(var i=0;i<strokes.length;i++){
+      if((strokes[i].t - started)/1000 > s) break;
+      n++; if(strokes[i].ok) ok++;
+    }
+    var m = s/60;
+    sec.push(s); out.push({raw:(n/5)/m, net:(ok/5)/m});
+  }
+  return {xs:sec, pts:out};
+}
+function showResult(run, scored, unlocked){
+  $('resultSec').hidden = false;
+  $('resultSub').textContent = run.dur + ' seconds, ' + (run.mode==='daily'?'daily challenge':'random words')
+    + ' — ' + run.chars + ' characters typed, longest combo ' + run.combo + '.';
+  var steady = run.cv===null ? null : clamp(100*(1-run.cv), 0, 100);
+  var best = store.bests[run.dur]||0, isPB = run.counted && run.net >= best - 1e-9;
+  $('resultTiles').innerHTML =
+    tile('Net WPM', run.net.toFixed(1), 'correct characters only' + (isPB?' · personal best':''), true) +
+    tile('Accuracy', run.acc.toFixed(1)+'<small>%</small>', okN+' of '+typedN+' keys correct') +
+    tile('Raw WPM', run.raw.toFixed(1), 'everything you typed') +
+    tile('Rhythm steadiness', steady===null?'—':Math.round(steady)+'<small>%</small>',
+         steady===null?'not enough keystrokes':'spread of your keystroke gaps') +
+    tile('Hesitations', run.hes.toFixed(1), 'pauses over 0.5 s per 100 keys') +
+    tile('XP earned', run.counted?('+'+run.xp):'—', run.counted?('level ' + levelOf(store.totalXp)):'run did not count');
+
+  var v = $('verdictBox');
+  if(scored.ok){
+    var b = band(scored.index);
+    v.innerHTML = '<div class="verdict"><span class="dot" style="background:'+b.c+'"></span><div>'
+      + '<div class="verdict-t">'+b.t+' — index '+(scored.index>=0?'+':'')+scored.index.toFixed(2)+'</div>'
+      + '<div class="verdict-d">Compared against your last '+scored.n+' '+scored.bucket+' runs. '+b.d+'</div></div></div>';
+  } else if(scored.short){
+    v.innerHTML = '<div class="verdict"><span class="dot" style="background:var(--warning)"></span><div>'
+      + '<div class="verdict-t">This run did not count</div><div class="verdict-d">'
+      + 'It needs at least ' + MIN_CHARS + ' characters typed and ' + MIN_IKI + ' measurable keystroke gaps. '
+      + 'Too little typing cannot describe your rhythm, so it is kept out of your baseline, '
+      + 'bests and achievements.</div></div></div>';
+  } else {
+    v.innerHTML = '<div class="verdict"><span class="dot" style="background:var(--text-muted)"></span><div>'
+      + '<div class="verdict-t">Baseline still building</div><div class="verdict-d">'
+      + scored.n + ' of ' + MIN_BASE + ' past ' + scored.bucket + ' runs collected. '
+      + 'They have to be on different days, so this needs about a week.</div></div></div>';
+  }
+
+  var tl = timeline(), ymax = 0;
+  tl.pts.forEach(function(p){ ymax = Math.max(ymax, p.raw, p.net); });
+  var yt = niceTicks(0, ymax*1.12, 4);
+  var ysc = function(y){ return VBH-PAD.b - (y/(yt[yt.length-1]||1))*(VBH-PAD.b-PAD.t); };
+  var xsc = function(x){ return PAD.l + (x-1)/Math.max(1,dur-1)*(VBW-PAD.l-PAD.r); };
+  var xl = [1, Math.round(dur/2), dur].map(function(s){ return {x:xsc(s), t:s+'s'}; });
+  var last = tl.pts[tl.pts.length-1];
+  var svg = '<svg viewBox="0 0 '+VBW+' '+VBH+'" role="img" aria-label="Speed over the run">'
+    + frame(yt, ysc, xl, tl.xs)
+    + '<line class="crosshair" y1="'+PAD.t+'" y2="'+(VBH-PAD.b)+'" stroke="var(--text-muted)" stroke-width="1" style="opacity:0"/>'
+    + '<path d="'+path(tl.xs, tl.pts.map(function(p){return p.raw;}), xsc, ysc)+'" fill="none" stroke="var(--series-2)" stroke-width="2" stroke-linejoin="round"/>'
+    + '<path d="'+path(tl.xs, tl.pts.map(function(p){return p.net;}), xsc, ysc)+'" fill="none" stroke="var(--series-1)" stroke-width="2" stroke-linejoin="round"/>'
+    + '<text class="slabel" fill="var(--series-2)" x="'+(VBW-PAD.r+7)+'" y="'+(ysc(last.raw)+4)+'">raw</text>'
+    + '<text class="slabel" fill="var(--series-1)" x="'+(VBW-PAD.r+7)+'" y="'+(ysc(last.net)+4)+'">net</text>'
+    + '</svg>';
+  $('speedChart').innerHTML = svg;
+  attachHover($('speedChart'), $('speedTip'), tl.xs, xsc, function(i){
+    var p = tl.pts[i]; if(!p) return null;
+    return '<div>'+tl.xs[i]+'s</div><div><b>'+p.net.toFixed(0)+'</b> net · <b>'+p.raw.toFixed(0)+'</b> raw WPM</div>';
+  });
+
+  $('runAch').innerHTML = unlocked.length
+    ? unlocked.map(function(a){ return badge(a, true); }).join('')
+    : '';
+  if(unlocked.length) toast(unlocked[0].ic + '  ' + unlocked[0].n + ' unlocked');
+}
+function tile(k, v, note, hero){
+  return '<div class="tile'+(hero?' hero':'')+'"><div class="tile-k">'+esc(k)+'</div>'
+    + '<div class="tile-v">'+v+'</div><div class="tile-n">'+esc(note||'')+'</div></div>';
+}
+
+/* ============================ analysis ============================ */
+function renderAnalysis(){
+  var runs = store.runs;
+  if(!runs.length){ $('analysisSub').textContent = 'Play a few times and this fills in.';
+    $('analysisBody').innerHTML = ''; return; }
+  var last = runs[runs.length-1];
+  var s = scoreToday(last);
+  if(!s.ok){
+    $('analysisSub').textContent = 'Your baseline needs ' + MIN_BASE + ' runs from earlier days at the same time of day.';
+    $('analysisBody').innerHTML = '<div class="empty">'+s.n+' of '+MIN_BASE+' '+s.bucket
+      + ' runs collected so far. Runs from today do not count toward it, so come back tomorrow.</div>';
+    return;
+  }
+  $('analysisSub').textContent = 'Today’s ' + s.bucket + ', against your last ' + s.n + ' ' + s.bucket + ' runs.';
+  var b = band(s.index);
+  var h = '<div class="tiles">'
+    + tile('Today’s index', (s.index>=0?'+':'')+s.index.toFixed(2), b.t.toLowerCase(), true) + '</div>';
+  h += '<table><thead><tr><th>Measure</th><th>Today</th><th>Your usual</th><th>vs baseline</th></tr></thead><tbody>';
+  s.parts.forEach(function(p){
+    var z = p.z===null ? '—' : (p.z>=0?'+':'')+p.z.toFixed(2);
+    h += '<tr><td>'+esc(p.m.label)+'</td><td>'+p.value.toFixed(p.m.dp)+p.m.unit
+      + '</td><td>'+(p.base===null?'—':p.base.toFixed(p.m.dp)+p.m.unit)+'</td><td>'+z+'</td></tr>';
+  });
+  h += '</tbody></table>';
+  h += '<p class="sub" style="margin-top:10px">A positive number always means sharper, including for hesitations '
+    + 'and rhythm, where the raw measure runs the other way. The index is the weighted average, '
+    + 'rescaled against its own day-to-day spread.</p>';
+  $('analysisBody').innerHTML = h;
+}
+
+/* ============================ history ============================ */
+function dayMedians(){
+  var by = {};
+  store.runs.forEach(function(r){ (by[r.day] || (by[r.day]=[])).push(r.net); });
+  return Object.keys(by).sort().map(function(d){ return {day:d, net:median(by[d]), n:by[d].length}; });
+}
+function renderHistory(){
+  var days = dayMedians();
+  if(days.length < 2){ $('historySec').hidden = true; return; }
+  $('historySec').hidden = false;
+  days = days.slice(-24);
+  var vals = days.map(function(d){ return d.net; });
+  var rs = robust(vals);
+  var lo = rs[1] ? rs[0]-rs[1] : null, hi = rs[1] ? rs[0]+rs[1] : null;
+  var mx = Math.max.apply(null, vals), mn = Math.min.apply(null, vals);
+  var yt = niceTicks(Math.max(0, mn-6), mx+6, 4);
+  var y0 = yt[0], y1 = yt[yt.length-1];
+  var ysc = function(y){ return VBH-PAD.b - (y-y0)/(y1-y0||1)*(VBH-PAD.b-PAD.t); };
+  var xs = days.map(function(_,i){ return i; });
+  var xsc = function(i){ return PAD.l + (days.length===1?0:i/(days.length-1))*(VBW-PAD.l-PAD.r); };
+  var xl = [0, days.length-1].map(function(i){ return {x:xsc(i), t:days[i].day.slice(5)}; });
+  var s = '<svg viewBox="0 0 '+VBW+' '+VBH+'" role="img" aria-label="Median net WPM per day">';
+  if(lo!==null) s += '<rect x="'+PAD.l+'" y="'+ysc(hi)+'" width="'+(VBW-PAD.l-PAD.r)
+      + '" height="'+Math.max(1,ysc(lo)-ysc(hi))+'" fill="var(--text-muted)" opacity="0.13"/>';
+  s += frame(yt, ysc, xl, xs);
+  s += '<line class="crosshair" y1="'+PAD.t+'" y2="'+(VBH-PAD.b)+'" stroke="var(--text-muted)" stroke-width="1" style="opacity:0"/>';
+  s += '<path d="'+path(xs, vals, xsc, ysc)+'" fill="none" stroke="var(--series-1)" stroke-width="2" stroke-linejoin="round"/>';
+  days.forEach(function(d,i){
+    s += '<circle cx="'+xsc(i)+'" cy="'+ysc(d.net)+'" r="4.5" fill="var(--series-1)" stroke="var(--surface-1)" stroke-width="2"/>';
+  });
+  var lastD = days[days.length-1];
+  s += '<text class="slabel" fill="var(--series-1)" x="'+(VBW-PAD.r+7)+'" y="'+(ysc(lastD.net)+4)+'">'+lastD.net.toFixed(0)+'</text>';
+  if(lo!==null) s += '<text class="tick" x="'+(PAD.l+6)+'" y="'+(ysc(hi)-5)+'">your usual range</text>';
+  s += '</svg>';
+  $('historyChart').innerHTML = s;
+  attachHover($('historyChart'), $('historyTip'), xs, xsc, function(i){
+    var d = days[i]; if(!d) return null;
+    return '<div>'+d.day+'</div><div><b>'+d.net.toFixed(1)+'</b> net WPM · '+d.n+' run'+(d.n===1?'':'s')+'</div>';
+  });
+  var t = '<table><thead><tr><th>Day</th><th>Runs</th><th>Median net WPM</th></tr></thead><tbody>';
+  days.slice().reverse().forEach(function(d){
+    t += '<tr><td>'+d.day+'</td><td>'+d.n+'</td><td>'+d.net.toFixed(1)+'</td></tr>'; });
+  $('histTable').innerHTML = t + '</tbody></table>';
+}
+
+/* ============================ slowest keys ============================ */
+function renderKeys(){
+  var rows = [];
+  Object.keys(store.keyIki).forEach(function(ch){
+    var a = store.keyIki[ch];
+    if(a.length >= 8) rows.push({ch:ch, ms:median(a), n:a.length});
+  });
+  if(rows.length < 4){ $('keysSec').hidden = true; return; }
+  $('keysSec').hidden = false;
+  rows.sort(function(a,b){ return b.ms-a.ms; });
+  rows = rows.slice(0, 10);
+  var mx = rows[0].ms, BH = 22, GAP = 8, H = rows.length*(BH+GAP)+16;
+  var xsc = function(v){ return (v/(mx*1.15))*(VBW-PAD.l-90); };
+  var s = '<svg viewBox="0 0 '+VBW+' '+H+'" role="img" aria-label="Slowest keys by median gap">';
+  rows.forEach(function(r,i){
+    var y = i*(BH+GAP)+6, w = Math.max(4, xsc(r.ms));
+    s += '<text class="tick" x="'+(PAD.l-12)+'" y="'+(y+BH/2+4)+'" text-anchor="end" style="font-family:var(--mono);font-size:13px;fill:var(--text-primary)">'+esc(r.ch)+'</text>';
+    s += '<rect data-i="'+i+'" x="'+PAD.l+'" y="'+y+'" width="'+w+'" height="'+BH+'" rx="4" fill="var(--series-1)"/>';
+    s += '<text class="tick" x="'+(PAD.l+w+9)+'" y="'+(y+BH/2+4)+'">'+Math.round(r.ms)+' ms</text>';
+  });
+  s += '</svg>';
+  $('keysChart').innerHTML = s;
+  var tip = $('keysTip'), box = $('keysChart');
+  box.querySelectorAll('rect').forEach(function(el){
+    el.addEventListener('mousemove', function(e){
+      var r = rows[+el.getAttribute('data-i')], bb = box.getBoundingClientRect();
+      tip.innerHTML = '<div>key <b>'+esc(r.ch)+'</b></div><div><b>'+Math.round(r.ms)+' ms</b> median gap · '+r.n+' samples</div>';
+      tip.style.opacity = 1;
+      tip.style.left = Math.min(e.clientX-bb.left+12, bb.width-tip.offsetWidth) + 'px';
+      tip.style.top = (e.clientY-bb.top+12) + 'px';
+    });
+    el.addEventListener('mouseleave', function(){ tip.style.opacity = 0; });
+  });
+  var t = '<table><thead><tr><th>Key</th><th>Median gap (ms)</th><th>Samples</th></tr></thead><tbody>';
+  rows.forEach(function(r){ t += '<tr><td>'+esc(r.ch)+'</td><td>'+Math.round(r.ms)+'</td><td>'+r.n+'</td></tr>'; });
+  $('keysTable').innerHTML = t + '</tbody></table>';
+}
+
+/* ============================ achievements ============================ */
+var ACH = [
+  {id:'first',   ic:'\u{1F331}', n:'Warm-up',    d:'Finish your first test',            t:function(r,s,st){ return st.runs.length>=1; }},
+  {id:'daily',   ic:'\u{1F5D3}', n:'Challenger', d:'Finish a daily challenge',          t:function(r){ return r.mode==='daily'; }},
+  {id:'flawless',ic:'\u{1F48E}', n:'Flawless',   d:'Finish with 100% accuracy',         t:function(r){ return r.acc>=100; }},
+  {id:'w50',     ic:'\u{1F6B6}', n:'Fifty',      d:'Reach 50 net WPM',                  t:function(r){ return r.net>=50; }},
+  {id:'w70',     ic:'\u{1F3C3}', n:'Seventy',    d:'Reach 70 net WPM',                  t:function(r){ return r.net>=70; }},
+  {id:'w100',    ic:'\u{1F680}', n:'Century',    d:'Reach 100 net WPM',                 t:function(r){ return r.net>=100; }},
+  {id:'combo100',ic:'\u{1F517}', n:'Unbroken',   d:'Hit a 100-character combo',         t:function(r){ return r.combo>=100; }},
+  {id:'steady',  ic:'\u{1F3AF}', n:'Metronome',  d:'Keep rhythm spread under 0.35',     t:function(r){ return r.cv<0.35; }},
+  {id:'streak3', ic:'\u{1F4C5}', n:'Three days', d:'Play three days running',           t:function(r,s,st){ return st.streak>=3; }},
+  {id:'streak7', ic:'\u{1F525}', n:'Full week',  d:'Play seven days running',           t:function(r,s,st){ return st.streak>=7; }},
+  {id:'runs25',  ic:'\u{2328}',  n:'Regular',    d:'Finish 25 tests',                   t:function(r,s,st){ return st.runs.length>=25; }},
+  {id:'peak',    ic:'\u{1F9E0}', n:'Peak day',   d:'Score +1.5 against your baseline',  t:function(r,s){ return s.ok && s.index>=1.5; }}
+];
+function checkAchievements(run, scored){
+  var got = [];
+  ACH.forEach(function(a){
+    if(store.ach.indexOf(a.id) !== -1) return;
+    var ok = false; try{ ok = a.t(run, scored, store); }catch(e){}
+    if(ok){ store.ach.push(a.id); got.push(a); }
+  });
+  return got;
+}
+function badge(a, on){
+  return '<div class="badge'+(on?'':' locked')+'"><span class="ic">'+a.ic+'</span>'
+    + '<span><b>'+esc(a.n)+'</b> — '+esc(a.d)+'</span></div>';
+}
+function renderAllAch(){
+  $('achSub').textContent = store.ach.length + ' of ' + ACH.length + ' unlocked.';
+  $('allAch').innerHTML = ACH.map(function(a){ return badge(a, store.ach.indexOf(a.id)!==-1); }).join('');
+}
+var toastT = null;
+function toast(msg){
+  var el = $('toast'); el.textContent = msg; el.classList.add('show');
+  clearTimeout(toastT); toastT = setTimeout(function(){ el.classList.remove('show'); }, 2600);
+}
+
+/* ============================ hud ============================ */
+function levelOf(xp){ return Math.floor(Math.sqrt(xp/60)) + 1; }
+function xpFor(L){ return 60*(L-1)*(L-1); }
+function renderHud(){
+  var L = levelOf(store.totalXp), a = xpFor(L), b = xpFor(L+1);
+  $('hudLevel').textContent = L;
+  $('hudXp').style.width = clamp((store.totalXp-a)/(b-a)*100, 0, 100) + '%';
+  $('hudXpText').textContent = (store.totalXp-a) + ' / ' + (b-a);
+  $('hudStreak').textContent = store.streak;
+  $('hudRuns').textContent = store.runs.length;
+  var bests = Object.keys(store.bests).map(function(k){ return store.bests[k]; });
+  $('hudBest').textContent = bests.length ? Math.round(Math.max.apply(null, bests)) : '—';
+}
+
+/* ============================ export / wiring ============================ */
+function download(name, text, type){
+  var b = new Blob([text], {type:type});
+  var u = URL.createObjectURL(b), a = document.createElement('a');
+  a.href = u; a.download = name; document.body.appendChild(a); a.click();
+  document.body.removeChild(a); setTimeout(function(){ URL.revokeObjectURL(u); }, 1000);
+}
+$('exportBtn').onclick = function(){
+  var cols = ['ts','day','bucket','dur','mode','raw','net','acc','cv','hes','combo','chars','xp'];
+  var out = cols.join(',') + '\n';
+  store.runs.forEach(function(r){
+    out += cols.map(function(c){ return typeof r[c]==='number' ? (Math.round(r[c]*10000)/10000) : r[c]; }).join(',') + '\n'; });
+  download('braintempo-runs.csv', out, 'text/csv');
+};
+$('exportJsonBtn').onclick = function(){ download('braintempo-data.json', JSON.stringify(store, null, 2), 'application/json'); };
+$('resetBtn').onclick = function(){
+  if(!confirm('Erase every run, achievement and streak stored in this browser? This cannot be undone.')) return;
+  store = {v:1, runs:[], keyIki:{}, totalXp:0, streak:0, lastDay:null, ach:[], bests:{}};
+  save(); renderHud(); renderAnalysis(); renderHistory(); renderKeys(); renderAllAch();
+  $('resultSec').hidden = true; reset(); toast('All data erased');
+};
+$('restartBtn').onclick = function(){ reset(); };
+$('durSeg').onclick = function(e){
+  var b = e.target.closest('button'); if(!b) return;
+  dur = +b.dataset.dur;
+  [].forEach.call(this.children, function(c){ c.classList.toggle('on', c===b); });
+  reset();
+};
+$('modeSeg').onclick = function(e){
+  var b = e.target.closest('button'); if(!b) return;
+  mode = b.dataset.mode;
+  [].forEach.call(this.children, function(c){ c.classList.toggle('on', c===b); });
+  reset();
+};
+$('histTableBtn').onclick = function(){
+  var t = $('histTable'); t.hidden = !t.hidden;
+  this.textContent = t.hidden ? 'Show the numbers' : 'Hide the numbers';
+};
+$('keysTableBtn').onclick = function(){
+  var t = $('keysTable'); t.hidden = !t.hidden;
+  this.textContent = t.hidden ? 'Show the numbers' : 'Hide the numbers';
+};
+var THEME = 'braintempo.theme';
+function applyTheme(t){
+  document.documentElement.setAttribute('data-theme', t);
+  $('themeBtn').textContent = t==='dark' ? 'Light' : 'Dark';
+  try{ localStorage.setItem(THEME, t); }catch(e){}
+}
+$('themeBtn').onclick = function(){
+  applyTheme(document.documentElement.getAttribute('data-theme')==='dark' ? 'light' : 'dark');
+  if(!$('resultSec').hidden && store.runs.length) renderHistory();
+  renderKeys();
+};
+document.addEventListener('keydown', onKey);
+wordsEl.addEventListener('click', function(){ wordsEl.focus(); });
+window.addEventListener('resize', function(){ moveCaret(); });
+
+/* ============================ init ============================ */
+var saved = null; try{ saved = localStorage.getItem(THEME); }catch(e){}
+applyTheme(saved || 'dark');
+reset();
+renderHud(); renderAnalysis(); renderHistory(); renderKeys(); renderAllAch();
+})();
+</script>
+</body>
+</html>

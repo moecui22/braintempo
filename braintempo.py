@@ -492,12 +492,16 @@ def score_reading(target, history):
     # Averaging four partly-independent z-scores shrinks the composite's
     # spread, so a raw value of -1.0 is NOT "one standard deviation down".
     # Re-express it in units of the composite's own day-to-day spread.
-    hist = [_composite(r, stats) for r in window]
-    center2, sigma2 = robust_center_scale([h for h in hist if h is not None])
-    if raw is None or center2 is None or sigma2 is None:
+    hist = [h for h in (_composite(r, stats) for r in window) if h is not None]
+    # Mean and SD, not median and MAD. Every z feeding the composite is already
+    # clipped to +/-3, so outlier resistance is spent here; MAD only adds
+    # estimator noise, and on a short window it runs low and inflates the index.
+    if raw is None or len(hist) < 3:
         index = raw
     else:
-        index = max(-4.0, min(4.0, (raw - center2) / sigma2))
+        center2 = statistics.mean(hist)
+        sigma2 = statistics.stdev(hist) if len(hist) > 1 else 0.0
+        index = raw if sigma2 <= 1e-9 else max(-4.0, min(4.0, (raw - center2) / sigma2))
 
     return {
         "insufficient": False,
