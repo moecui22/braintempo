@@ -110,6 +110,23 @@ python3 tests/test_braintempo.py  # 16 checks
 The two share the scoring method but not a database. Use whichever you will
 actually keep up.
 
+## Design
+
+The interface follows the Linear design language, via
+[voltagent/awesome-design-md](https://github.com/voltagent/awesome-design-md).
+`DESIGN.md` in this repo is that file, unmodified, with a short note at the end
+recording the three places this project had to deviate and why.
+
+Near-black canvas, a four-step surface ladder instead of shadows, hairline
+borders, negative tracking on display type, and lavender used only on the brand
+mark, focus, the active control and the primary data series.
+
+The two chart colours were checked against a colour-blindness and contrast
+validator on Linear's own card surface before being used: worst-case colour
+difference 25.7 under simulated protanopia, well clear of the threshold. In
+light mode the orange falls below the 3:1 contrast line, which is why both
+series carry direct labels and every chart has a "show the numbers" table.
+
 ## Layout
 
 | Path | What it is |
@@ -117,3 +134,4 @@ actually keep up.
 | `docs/index.html` | The whole web app. One file, no dependencies, no build step. |
 | `braintempo.py` | The background collector and its CLI reports. |
 | `tests/test_braintempo.py` | Privacy, measurement and scoring tests for the collector. |
+| `DESIGN.md` | The design system the interface follows. |
