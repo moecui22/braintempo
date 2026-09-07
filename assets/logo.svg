@@ -1,25 +1,27 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512" role="img" aria-label="braintempo">
   <title>braintempo</title>
   <rect width="512" height="512" rx="114" ry="114" fill="#0066cc"/>
-  <!-- brain: an ellipse plus lobes, unioned by shared fill -->
+  <!-- brain in profile: one lobed mass -->
   <g fill="#ffffff">
-    <ellipse cx="256" cy="196" rx="114" ry="80"/>
-    <circle cx="176" cy="152" r="46"/>
-    <circle cx="238" cy="136" r="48"/>
-    <circle cx="306" cy="142" r="46"/>
-    <circle cx="352" cy="184" r="44"/>
-    <circle cx="160" cy="196" r="44"/>
-    <circle cx="196" cy="242" r="44"/>
-    <circle cx="316" cy="242" r="44"/>
+    <ellipse cx="252" cy="196" rx="106" ry="80"/>
+    <circle cx="186" cy="154" r="46"/>
+    <circle cx="250" cy="142" r="48"/>
+    <circle cx="314" cy="154" r="46"/>
+    <circle cx="346" cy="200" r="42"/>
+    <circle cx="158" cy="196" r="42"/>
+    <circle cx="186" cy="242" r="42"/>
+    <circle cx="316" cy="244" r="42"/>
   </g>
-  <!-- one fold down the midline -->
-  <path fill="none" stroke="#0066cc" stroke-width="17" stroke-linecap="round"
-        d="M256 100 C242 140, 268 168, 250 204 C236 236, 264 254, 256 284"/>
+  <!-- two sulci running front to back: the profile read -->
+  <g fill="none" stroke="#0066cc" stroke-width="16" stroke-linecap="round">
+    <path d="M170 172 C210 150, 238 182, 274 160 C306 141, 326 162, 344 152"/>
+    <path d="M164 228 C206 208, 232 240, 270 218 C302 200, 324 222, 346 210"/>
+  </g>
   <!-- keyboard -->
   <g fill="#ffffff">
-    <rect x="128" y="336" width="72" height="58" rx="17"/>
-    <rect x="220" y="336" width="72" height="58" rx="17"/>
-    <rect x="312" y="336" width="72" height="58" rx="17"/>
-    <rect x="128" y="408" width="256" height="34" rx="17" opacity=".6"/>
+    <rect x="130" y="348" width="70" height="54" rx="16"/>
+    <rect x="221" y="348" width="70" height="54" rx="16"/>
+    <rect x="312" y="348" width="70" height="54" rx="16"/>
+    <rect x="130" y="414" width="252" height="30" rx="15" opacity=".6"/>
   </g>
 </svg>
