@@ -7,100 +7,103 @@
 <meta name="description" content="A no-punctuation typing test that tracks your speed, correct speed and rhythm, then compares today against your own baseline.">
 <style>
 /* ==========================================================================
-   Design language: Linear, via voltagent/awesome-design-md (see DESIGN.md).
-   Near-black canvas, a four-step surface ladder, hairline borders, negative
-   display tracking, and lavender used only where it means something.
+   Design language: Apple, via voltagent/awesome-design-md (see DESIGN.md).
+   Alternating full-bleed bands, low density, quiet type with negative
+   tracking, one blue accent, and exactly one drop-shadow in the system.
    ========================================================================== */
 :root{
-  color-scheme: dark;
-  /* canvas + surface ladder */
-  --bg:#010102; --surface-1:#0f1011; --surface-2:#141516; --surface-3:#18191a;
-  --border:#23252a; --border-strong:#34343a; --grid:#1b1d21;
-  /* ink */
-  --text-primary:#f7f8f8; --text-secondary:#8a8f98; --text-muted:#62666d;
-  --untyped:#4a4d54;
-  /* accent — brand mark, focus, active control, primary series. Nothing else. */
-  --accent:#5e6ad2; --accent-hover:#828fff; --caret:#5e6ad2;
-  --series-1:#5e6ad2; --series-2:#d95926;
-  --good:#27a644; --warning:#d9a13a; --serious:#d97a3a; --critical:#e5484d;
-  --sans:"SF Pro Display",-apple-system,BlinkMacSystemFont,Inter,system-ui,"Segoe UI",sans-serif;
-  --mono:ui-monospace,"SF Mono",SFMono-Regular,Menlo,Consolas,monospace;
-  --r-sm:6px; --r-md:8px; --r-lg:12px; --r-xl:16px;
-}
-:root[data-theme="light"]{
   color-scheme: light;
-  --bg:#ffffff; --surface-1:#f5f6f6; --surface-2:#ecedee; --surface-3:#e3e4e6;
-  --border:#e0e1e3; --border-strong:#cfd1d4; --grid:#eaebec;
-  --text-primary:#0d0e10; --text-secondary:#52555c; --text-muted:#767981;
-  --untyped:#b4b6bb;
-  --accent:#5e6ad2; --accent-hover:#4f5ac0; --caret:#5e6ad2;
-  --series-1:#5e6ad2; --series-2:#eb6834;
+  --accent:#0066cc; --accent-focus:#0071e3;
+  --ink:#1d1d1f; --ink-80:#333333; --ink-48:#7a7a7a;
+  --canvas:#ffffff; --parchment:#f5f5f7; --tile:#1d1d1f;
+  --hairline:#e0e0e0; --divider-soft:#f0f0f0; --chip:#d2d2d7;
+  --sans:"SF Pro Display","SF Pro Text",system-ui,-apple-system,BlinkMacSystemFont,"Helvetica Neue",sans-serif;
+  --mono:ui-monospace,"SF Mono",SFMono-Regular,Menlo,Consolas,monospace;
+  --good:#248a3d; --warning:#b25000; --serious:#c04a1e; --critical:#d70015;
+  /* the one shadow in the system: a product resting on a surface */
+  --lift:rgba(0,0,0,.22) 3px 5px 30px;
+  --r-sm:8px; --r-md:11px; --r-lg:18px;
 }
 *{box-sizing:border-box}
 html,body{margin:0;padding:0}
 body{
-  background:var(--bg); color:var(--text-primary);
-  font-family:var(--sans); font-size:15px; line-height:1.5; letter-spacing:-.05px;
+  background:var(--canvas); color:var(--ink);
+  font-family:var(--sans); font-size:17px; line-height:1.47; letter-spacing:-.022em;
   -webkit-font-smoothing:antialiased;
 }
-.wrap{max-width:940px;margin:0 auto;padding:32px 24px 96px}
 a{color:var(--accent);text-decoration:none}
-:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:var(--r-sm)}
+:focus-visible{outline:3px solid var(--accent-focus);outline-offset:3px;border-radius:var(--r-sm)}
 
-/* eyebrow — the small uppercase label used on every metric */
-.hud-k,.live-k,.tile-k,th{
-  font-size:12px;font-weight:500;letter-spacing:.4px;text-transform:uppercase;
-  color:var(--text-muted);
+/* --- bands: the colour change IS the section divider --- */
+.band{padding:80px 0}
+.band .wrap{max-width:980px;margin:0 auto;padding:0 24px}
+.band-light{ --surface-1:var(--canvas); --surface-2:var(--parchment); --surface-3:#ebebed;
+  --text-primary:var(--ink); --text-secondary:var(--ink-80); --text-muted:var(--ink-48);
+  --border:var(--hairline); --grid:var(--divider-soft); --untyped:#c7c7cc;
+  --series-1:#0066cc; --series-2:#eb6834; --caret:#0066cc;
+  background:var(--canvas); color:var(--ink);
 }
+.band-parchment{ --surface-1:var(--canvas); --surface-2:#ebebed; --surface-3:#e2e2e6;
+  --text-primary:var(--ink); --text-secondary:var(--ink-80); --text-muted:var(--ink-48);
+  --border:var(--hairline); --grid:#e6e6e9; --untyped:#c7c7cc;
+  --series-1:#0066cc; --series-2:#eb6834; --caret:#0066cc;
+  background:var(--parchment); color:var(--ink);
+}
+.band-dark{ --surface-1:#272729; --surface-2:#2a2a2c; --surface-3:#323234;
+  --text-primary:#ffffff; --text-secondary:#cccccc; --text-muted:#8e8e93;
+  --border:#3a3a3c; --grid:#2f2f31; --untyped:#5a5a5e;
+  --series-1:#2997ff; --series-2:#d95926; --caret:#2997ff;
+  --accent:#2997ff; --good:#30d158; --warning:#ffd426; --serious:#ff9f0a; --critical:#ff453a;
+  background:var(--tile); color:#fff;
+}
+:root[data-theme="dark"] .band-light{background:#000;--surface-1:#1c1c1e;--surface-2:#232325;
+  --surface-3:#2c2c2e;--text-primary:#fff;--text-secondary:#cccccc;--text-muted:#8e8e93;
+  --border:#38383a;--grid:#2a2a2c;--untyped:#5a5a5e;--series-1:#2997ff;--series-2:#d95926;
+  --caret:#2997ff;--accent:#2997ff;--good:#30d158;--warning:#ffd426;--serious:#ff9f0a;--critical:#ff453a;color:#fff}
+:root[data-theme="dark"] .band-parchment{background:#0b0b0c;--surface-1:#1c1c1e;--surface-2:#232325;
+  --surface-3:#2c2c2e;--text-primary:#fff;--text-secondary:#cccccc;--text-muted:#8e8e93;
+  --border:#38383a;--grid:#2a2a2c;--untyped:#5a5a5e;--series-1:#2997ff;--series-2:#d95926;
+  --caret:#2997ff;--accent:#2997ff;--good:#30d158;--warning:#ffd426;--serious:#ff9f0a;--critical:#ff453a;color:#fff}
+:root[data-theme="dark"] body{background:#000;color:#fff}
 
-header{display:flex;align-items:center;gap:16px;flex-wrap:wrap;margin-bottom:32px}
-.brand{font-size:22px;font-weight:600;letter-spacing:-.4px}
+/* --- nav + hero --- */
+.nav{display:flex;align-items:center;gap:16px;height:48px;font-size:12px;letter-spacing:-.01em}
+.brand{font-size:17px;font-weight:600;letter-spacing:-.022em}
 .brand span{color:var(--accent)}
-.tagline{color:var(--text-secondary);font-size:14px;flex:1;min-width:220px;letter-spacing:0}
-button{font-family:inherit;cursor:pointer}
-.btn{
-  background:var(--surface-1);color:var(--text-primary);
-  border:1px solid var(--border);border-radius:var(--r-md);
-  padding:8px 14px;font-size:14px;font-weight:500;
-  transition:background .12s ease,border-color .12s ease;
-}
-.btn:hover{background:var(--surface-2);border-color:var(--border-strong)}
-
-.hud{
-  display:flex;gap:24px;flex-wrap:wrap;align-items:center;
-  background:var(--surface-1);border:1px solid var(--border);border-radius:var(--r-lg);
-  padding:16px 24px;margin-bottom:16px;
-}
-.hud-item{display:flex;flex-direction:column;gap:3px;min-width:72px}
-.hud-v{font-size:20px;font-weight:600;letter-spacing:-.4px;font-variant-numeric:tabular-nums}
-.xpwrap{flex:1;min-width:170px}
-.xpbar{height:4px;background:var(--surface-3);border-radius:9999px;overflow:hidden;margin-top:8px}
-.xpfill{height:100%;background:var(--accent);border-radius:9999px;transition:width .5s ease}
-
-.controls{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:16px}
-.seg{display:flex;gap:4px;background:var(--surface-1);border:1px solid var(--border);
-  border-radius:9999px;padding:4px}
-.seg button{
-  background:transparent;color:var(--text-secondary);border:0;border-radius:9999px;
-  padding:6px 14px;font-size:14px;font-weight:500;transition:background .12s,color .12s;
-}
-.seg button:hover{color:var(--text-primary)}
-.seg button.on{background:var(--surface-3);color:var(--text-primary)}
 .spacer{flex:1}
+.hero{text-align:center;padding:48px 0 40px}
+.hero h1{font-size:56px;font-weight:600;line-height:1.07;letter-spacing:-.028em;margin:0 0 16px}
+.hero p{font-size:28px;font-weight:400;line-height:1.14;letter-spacing:.007em;
+  color:var(--text-secondary);margin:0 auto;max-width:34ch}
 
-.card{background:var(--surface-1);border:1px solid var(--border);border-radius:var(--r-lg);padding:24px}
-.livebar{display:flex;gap:32px;align-items:flex-start;margin-bottom:24px;flex-wrap:wrap}
-.livebar>div{display:flex;flex-direction:column;gap:2px}
-.live-v{font-size:32px;font-weight:600;letter-spacing:-1px;font-variant-numeric:tabular-nums;line-height:1.1}
+button{font-family:inherit;cursor:pointer}
+.btn{background:none;border:0;color:var(--accent);font-size:17px;letter-spacing:-.022em;padding:0}
+.btn:hover{text-decoration:underline}
+.pill{background:var(--accent);color:#fff;border:0;border-radius:9999px;
+  padding:11px 22px;font-size:17px;letter-spacing:-.022em}
+.pill:hover{background:var(--accent-focus)}
+
+/* --- controls --- */
+.controls{display:flex;gap:12px;flex-wrap:wrap;align-items:center;justify-content:center;margin-bottom:24px}
+.seg{display:flex;gap:2px;background:var(--surface-2);border-radius:9999px;padding:2px}
+.seg button{background:transparent;color:var(--text-secondary);border:0;border-radius:9999px;
+  padding:7px 16px;font-size:15px;letter-spacing:-.01em;transition:background .18s,color .18s}
+.seg button.on{background:var(--surface-1);color:var(--text-primary);box-shadow:0 1px 3px rgba(0,0,0,.08)}
+
+/* --- the stage: this is the product, so it gets the one shadow --- */
+.card{background:var(--surface-1);border-radius:var(--r-lg);padding:40px;box-shadow:var(--lift)}
+:root[data-theme="dark"] .card{box-shadow:none;border:1px solid var(--border)}
+.livebar{display:flex;gap:48px;align-items:flex-start;margin-bottom:32px;flex-wrap:wrap;justify-content:center}
+.livebar>div{display:flex;flex-direction:column;gap:2px;align-items:center}
+.live-v{font-size:40px;font-weight:600;letter-spacing:-.02em;font-variant-numeric:tabular-nums;line-height:1.1}
+.live-k,.hud-k,.tile-k,th{font-size:12px;font-weight:400;letter-spacing:-.01em;color:var(--text-muted)}
 #combo{color:var(--text-muted);transition:color .2s}
 #combo.hot{color:var(--text-primary)}
-#combo.blaze{color:var(--accent-hover)}
+#combo.blaze{color:var(--accent)}
 
-.words{
-  font-family:var(--mono); font-size:22px; line-height:1.7; letter-spacing:0;
-  height:calc(1.7em * 3); overflow:hidden; position:relative;
-  color:var(--untyped); outline:none; user-select:none; cursor:text;
-}
+.words{font-family:var(--mono);font-size:24px;line-height:1.75;letter-spacing:0;
+  height:calc(1.75em * 3);overflow:hidden;position:relative;color:var(--untyped);
+  outline:none;user-select:none;cursor:text}
 .words .inner{position:absolute;top:0;left:0;right:0;transition:transform .12s ease}
 .w{display:inline-block;margin-right:.6em;position:relative;white-space:nowrap}
 .c.ok{color:var(--text-primary)}
@@ -108,185 +111,211 @@ button{font-family:inherit;cursor:pointer}
 .c.extra{color:var(--critical);opacity:.5}
 .w.done.miss{text-decoration:underline;text-decoration-color:var(--critical);
   text-decoration-thickness:1px;text-underline-offset:7px}
-.caret{position:absolute;width:2px;background:var(--caret);border-radius:1px;
-  height:1.2em;transition:left .06s linear, top .06s linear}
+.caret{position:absolute;width:2px;background:var(--caret);border-radius:1px;height:1.2em;
+  transition:left .06s linear, top .06s linear}
 @keyframes blink{0%,100%{opacity:1}50%{opacity:.15}}
 .caret.idle{animation:blink 1.05s infinite}
 .focusnote{position:absolute;inset:0;display:none;align-items:center;justify-content:center;
-  font-family:var(--sans);font-size:14px;color:var(--text-secondary)}
-.blurred .inner{filter:blur(3.5px);opacity:.5}
+  font-family:var(--sans);font-size:17px;color:var(--text-secondary)}
+.blurred .inner{filter:blur(4px);opacity:.5}
 .blurred .focusnote{display:flex}
-.hint{margin-top:16px;font-size:13px;color:var(--text-muted)}
-kbd{font-family:var(--mono);font-size:11px;background:var(--surface-3);
-  border:1px solid var(--border);border-radius:var(--r-xs,4px);padding:2px 6px;color:var(--text-secondary)}
+.hint{margin-top:24px;font-size:14px;color:var(--text-muted);text-align:center}
+kbd{font-family:var(--mono);font-size:12px;background:var(--surface-2);
+  border-radius:5px;padding:2px 6px;color:var(--text-secondary)}
 
-section{margin-top:48px}
-h2{font-size:22px;font-weight:600;margin:0 0 4px;letter-spacing:-.4px}
-.sub{font-size:14px;color:var(--text-secondary);margin:0 0 16px;letter-spacing:0}
+/* --- hud strip --- */
+.hud{display:flex;gap:40px;flex-wrap:wrap;align-items:center;justify-content:center;
+  padding:24px 0 32px}
+.hud-item{display:flex;flex-direction:column;gap:2px;align-items:center;min-width:64px}
+.hud-v{font-size:24px;font-weight:600;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+.xpwrap{flex:0 1 220px;min-width:180px}
+.xpbar{height:4px;background:var(--surface-3);border-radius:9999px;overflow:hidden;margin-top:8px;width:100%}
+.xpfill{height:100%;background:var(--accent);border-radius:9999px;transition:width .5s ease}
 
-.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(148px,1fr));gap:12px}
-.tile{background:var(--surface-1);border:1px solid var(--border);border-radius:var(--r-lg);padding:16px}
-.tile-v{font-size:28px;font-weight:600;letter-spacing:-1px;font-variant-numeric:tabular-nums;
-  line-height:1.15;margin-top:6px}
-.tile-v small{font-size:14px;font-weight:400;color:var(--text-muted);letter-spacing:0}
-.tile-n{font-size:13px;color:var(--text-muted);margin-top:4px;letter-spacing:0}
+/* --- section headings --- */
+h2{font-size:40px;font-weight:600;line-height:1.1;letter-spacing:-.02em;margin:0 0 12px}
+.sub{font-size:19px;font-weight:400;color:var(--text-secondary);margin:0 0 32px;letter-spacing:-.01em;max-width:60ch}
+
+/* --- tiles --- */
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:16px}
+.tile{background:var(--surface-1);border-radius:var(--r-md);padding:24px}
+.band-light .tile,.band-parchment .tile{border:1px solid var(--border)}
+.tile-v{font-size:34px;font-weight:600;letter-spacing:-.02em;font-variant-numeric:tabular-nums;
+  line-height:1.15;margin-top:8px}
+.tile-v small{font-size:17px;font-weight:400;color:var(--text-muted)}
+.tile-n{font-size:14px;color:var(--text-muted);margin-top:6px}
 .tile.hero{background:var(--surface-2)}
-.tile.hero .tile-v{font-size:40px;letter-spacing:-1.8px}
+.tile.hero .tile-v{font-size:56px;letter-spacing:-.028em}
 
-.verdict{display:flex;align-items:flex-start;gap:12px;margin-top:12px;
-  background:var(--surface-1);border:1px solid var(--border);border-radius:var(--r-lg);padding:16px}
-.dot{width:8px;height:8px;border-radius:50%;flex:0 0 auto;margin-top:7px}
-.verdict-t{font-weight:500;letter-spacing:-.2px}
-.verdict-d{font-size:13px;color:var(--text-secondary);letter-spacing:0}
+.verdict{display:flex;align-items:flex-start;gap:14px;margin-top:16px;
+  background:var(--surface-1);border-radius:var(--r-md);padding:20px 24px}
+.band-light .verdict,.band-parchment .verdict{border:1px solid var(--border)}
+.dot{width:10px;height:10px;border-radius:50%;flex:0 0 auto;margin-top:8px}
+.verdict-t{font-weight:600;letter-spacing:-.01em}
+.verdict-d{font-size:15px;color:var(--text-secondary)}
 
-.chart{position:relative;margin-top:16px}
+/* --- charts --- */
+.chart{position:relative;margin-top:24px}
 svg{display:block;width:100%;height:auto;overflow:visible}
 .axis-line{stroke:var(--border);stroke-width:1}
 .gridline{stroke:var(--grid);stroke-width:1}
-.tick{fill:var(--text-muted);font-size:11px;font-family:var(--sans)}
-.slabel{font-size:12px;font-weight:500;font-family:var(--sans);letter-spacing:0}
-.legend{display:flex;gap:20px;flex-wrap:wrap;font-size:13px;color:var(--text-secondary);margin-bottom:8px}
-.legend i{display:inline-block;width:8px;height:8px;border-radius:2px;margin-right:8px;vertical-align:1px}
+.tick{fill:var(--text-muted);font-size:12px;font-family:var(--sans)}
+.slabel{font-size:13px;font-weight:600;font-family:var(--sans)}
+.legend{display:flex;gap:24px;flex-wrap:wrap;font-size:15px;color:var(--text-secondary);margin-bottom:8px}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:8px;vertical-align:0}
 .tip{position:absolute;pointer-events:none;opacity:0;transition:opacity .1s;
-  background:var(--surface-3);border:1px solid var(--border-strong);border-radius:var(--r-md);
-  padding:8px 10px;font-size:13px;white-space:nowrap;z-index:5}
-.tip b{font-variant-numeric:tabular-nums;font-weight:500}
-.empty{color:var(--text-muted);font-size:14px;padding:16px 0}
-table{border-collapse:collapse;width:100%;font-size:14px;margin-top:12px}
-th,td{text-align:right;padding:8px 12px;border-bottom:1px solid var(--border);font-variant-numeric:tabular-nums}
+  background:var(--surface-1);border:1px solid var(--border);border-radius:var(--r-sm);
+  padding:10px 12px;font-size:14px;white-space:nowrap;z-index:5;box-shadow:0 4px 16px rgba(0,0,0,.12)}
+.tip b{font-variant-numeric:tabular-nums;font-weight:600}
+.empty{color:var(--text-muted);font-size:17px;padding:24px 0}
+table{border-collapse:collapse;width:100%;font-size:15px;margin-top:16px}
+th,td{text-align:right;padding:12px 16px;border-bottom:1px solid var(--border);font-variant-numeric:tabular-nums}
 th:first-child,td:first-child{text-align:left}
-th{border-bottom-color:var(--border-strong)}
-.linkish{background:none;border:0;color:var(--accent);padding:0;font-size:13px;
-  font-weight:500;cursor:pointer;letter-spacing:0}
-.linkish:hover{color:var(--accent-hover)}
+.linkish{background:none;border:0;color:var(--accent);padding:0;font-size:15px;cursor:pointer}
+.linkish:hover{text-decoration:underline}
 
-.ach{display:flex;flex-wrap:wrap;gap:8px}
-.badge{display:flex;align-items:center;gap:8px;background:var(--surface-1);
-  border:1px solid var(--border);border-radius:var(--r-md);padding:8px 12px;font-size:13px}
-.badge.locked{opacity:.35}
-.badge .ic{font-size:14px;line-height:1}
-.badge b{font-weight:500}
+/* --- achievements --- */
+.ach{display:flex;flex-wrap:wrap;gap:12px}
+.badge{display:flex;align-items:center;gap:10px;background:var(--surface-1);
+  border-radius:9999px;padding:10px 18px;font-size:15px}
+.band-light .badge,.band-parchment .badge{border:1px solid var(--border)}
+.badge.locked{opacity:.32}
+.badge .ic{font-size:17px;line-height:1}
+.badge b{font-weight:600}
 .badge span{color:var(--text-secondary)}
-.toast{position:fixed;left:50%;bottom:32px;transform:translateX(-50%) translateY(12px);
-  background:var(--surface-2);border:1px solid var(--border-strong);border-radius:var(--r-lg);
-  padding:12px 18px;font-size:14px;opacity:0;transition:all .3s ease;z-index:50}
+.toast{position:fixed;left:50%;bottom:40px;transform:translateX(-50%) translateY(12px);
+  background:var(--tile);color:#fff;border-radius:9999px;padding:14px 24px;font-size:17px;
+  opacity:0;transition:all .3s ease;z-index:50;box-shadow:var(--lift)}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
-footer{margin-top:64px;padding-top:24px;border-top:1px solid var(--border);
-  font-size:13px;color:var(--text-muted);display:flex;gap:16px;flex-wrap:wrap;align-items:center}
-@media (max-width:560px){
-  .wrap{padding:24px 16px 64px}
-  .words{font-size:18px}
-  .tile.hero .tile-v{font-size:32px}
-  .hud{gap:16px;padding:16px}
+footer{padding-top:32px;border-top:1px solid var(--border);font-size:14px;color:var(--text-muted);
+  display:flex;gap:20px;flex-wrap:wrap;align-items:center}
+
+@media (max-width:640px){
+  .band{padding:56px 0}
+  .hero{padding:24px 0}
+  .hero h1{font-size:36px}
+  .hero p{font-size:21px}
+  h2{font-size:30px}
+  .card{padding:24px}
+  .words{font-size:19px}
+  .livebar{gap:24px}
+  .live-v{font-size:30px}
+  .tile.hero .tile-v{font-size:40px}
 }
 </style>
 </head>
 <body>
-<div class="wrap">
 
-<header>
-  <div class="brand">brain<span>tempo</span></div>
-  <div class="tagline">A no-punctuation typing test that measures your rhythm, then compares today against your own baseline.</div>
-  <button class="btn" id="themeBtn" aria-label="Toggle colour theme">Light</button>
-</header>
+<div class="band band-light">
+ <div class="wrap">
+  <nav class="nav">
+    <div class="brand">brain<span>tempo</span></div>
+    <div class="spacer"></div>
+    <button class="btn" id="themeBtn" aria-label="Toggle colour theme">Light</button>
+  </nav>
 
-<div class="hud">
-  <div class="hud-item"><div class="hud-k">Level</div><div class="hud-v" id="hudLevel">1</div></div>
-  <div class="hud-item xpwrap">
-    <div class="hud-k">XP <span id="hudXpText" style="color:var(--text-muted);text-transform:none;letter-spacing:0"></span></div>
-    <div class="xpbar"><div class="xpfill" id="hudXp" style="width:0%"></div></div>
+  <div class="hero">
+    <h1>How sharp are you today?</h1>
+    <p>A typing test that only ever compares you to yourself.</p>
   </div>
-  <div class="hud-item"><div class="hud-k">Day streak</div><div class="hud-v" id="hudStreak">0</div></div>
-  <div class="hud-item"><div class="hud-k">Best net</div><div class="hud-v" id="hudBest">—</div></div>
-  <div class="hud-item"><div class="hud-k">Tests</div><div class="hud-v" id="hudRuns">0</div></div>
+
+  <div class="hud">
+    <div class="hud-item"><div class="hud-v" id="hudLevel">1</div><div class="hud-k">Level</div></div>
+    <div class="hud-item xpwrap"><div class="hud-k">XP <span id="hudXpText"></span></div>
+      <div class="xpbar"><div class="xpfill" id="hudXp" style="width:0%"></div></div></div>
+    <div class="hud-item"><div class="hud-v" id="hudStreak">0</div><div class="hud-k">Day streak</div></div>
+    <div class="hud-item"><div class="hud-v" id="hudBest">—</div><div class="hud-k">Best net</div></div>
+    <div class="hud-item"><div class="hud-v" id="hudRuns">0</div><div class="hud-k">Tests</div></div>
+  </div>
+
+  <div class="controls">
+    <div class="seg" id="durSeg">
+      <button data-dur="15">15s</button><button data-dur="30" class="on">30s</button><button data-dur="60">60s</button>
+    </div>
+    <div class="seg" id="modeSeg">
+      <button data-mode="random" class="on">Random</button><button data-mode="daily">Daily challenge</button>
+    </div>
+    <button class="pill" id="restartBtn">Restart</button>
+  </div>
+
+  <div class="card">
+    <div class="livebar">
+      <div><div class="live-v" id="liveTime">30</div><div class="live-k">Seconds left</div></div>
+      <div><div class="live-v" id="liveWpm">0</div><div class="live-k">Net WPM</div></div>
+      <div><div class="live-v" id="liveAcc">100<small>%</small></div><div class="live-k">Accuracy</div></div>
+      <div><div class="live-v" id="combo">0</div><div class="live-k">Combo</div></div>
+    </div>
+    <div class="words" id="words" tabindex="0">
+      <div class="inner" id="inner"></div>
+      <div class="caret idle" id="caret"></div>
+      <div class="focusnote">Click here to focus</div>
+    </div>
+    <div class="hint" id="hint">Just start typing. <kbd>Tab</kbd> restarts, <kbd>Esc</kbd> resets this run.</div>
+  </div>
+ </div>
 </div>
 
-<div class="controls">
-  <div class="seg" id="durSeg">
-    <button data-dur="15">15s</button><button data-dur="30" class="on">30s</button><button data-dur="60">60s</button>
-  </div>
-  <div class="seg" id="modeSeg">
-    <button data-mode="random" class="on">Random</button><button data-mode="daily">Daily challenge</button>
-  </div>
-  <div class="spacer"></div>
-  <button class="btn" id="restartBtn">Restart <kbd>Tab</kbd></button>
-</div>
-
-<div class="card">
-  <div class="livebar">
-    <div><div class="live-v" id="liveTime">30</div><div class="live-k">Seconds left</div></div>
-    <div><div class="live-v" id="liveWpm">0</div><div class="live-k">Net WPM</div></div>
-    <div><div class="live-v" id="liveAcc">100<small>%</small></div><div class="live-k">Accuracy</div></div>
-    <div><div class="live-v" id="combo">0</div><div class="live-k">Combo</div></div>
-  </div>
-  <div class="words" id="words" tabindex="0">
-    <div class="inner" id="inner"></div>
-    <div class="caret idle" id="caret"></div>
-    <div class="focusnote">Click here to focus</div>
-  </div>
-  <div class="hint" id="hint">Just start typing. <kbd>Tab</kbd> restarts, <kbd>Esc</kbd> resets everything about this run.</div>
-</div>
-
-<section id="resultSec" hidden>
+<section class="band band-parchment" id="resultSec" hidden>
+ <div class="wrap">
   <h2>This run</h2>
   <p class="sub" id="resultSub"></p>
   <div class="tiles" id="resultTiles"></div>
   <div id="verdictBox"></div>
-
-  <div class="chart" style="margin-top:18px">
+  <div class="chart" style="margin-top:32px">
     <div class="legend">
-      <span><i style="background:var(--series-1)"></i>Net WPM (correct characters only)</span>
-      <span><i style="background:var(--series-2)"></i>Raw WPM (everything you typed)</span>
+      <span><i style="background:var(--series-1)"></i>Net WPM — correct characters only</span>
+      <span><i style="background:var(--series-2)"></i>Raw WPM — everything you typed</span>
     </div>
     <div id="speedChart"></div>
     <div class="tip" id="speedTip"></div>
   </div>
-  <div class="ach" id="runAch" style="margin-top:16px"></div>
+  <div class="ach" id="runAch" style="margin-top:24px"></div>
+ </div>
 </section>
 
-<section id="analysisSec">
+<section class="band band-dark" id="analysisSec">
+ <div class="wrap">
   <h2>Your baseline</h2>
   <p class="sub" id="analysisSub">Play a few times and this fills in.</p>
   <div id="analysisBody"></div>
+ </div>
 </section>
 
-<section id="historySec" hidden>
+<section class="band band-light" id="historySec" hidden>
+ <div class="wrap">
   <h2>History</h2>
-  <p class="sub">Median net WPM per day. The band is your baseline range, so a point outside it is a genuinely unusual day.</p>
-  <div class="chart">
-    <div id="historyChart"></div>
-    <div class="tip" id="historyTip"></div>
-  </div>
-  <button class="linkish" id="histTableBtn">Show the numbers</button>
+  <p class="sub">Median net WPM per day. The band is your usual range, so a point outside it is a genuinely unusual day.</p>
+  <div class="chart"><div id="historyChart"></div><div class="tip" id="historyTip"></div></div>
+  <button class="linkish" id="histTableBtn" style="margin-top:16px">Show the numbers</button>
   <div id="histTable" hidden></div>
+ </div>
 </section>
 
-<section id="keysSec" hidden>
+<section class="band band-parchment" id="keysSec" hidden>
+ <div class="wrap">
   <h2>Slowest keys</h2>
   <p class="sub">Median time from the previous key to this one, across every test you have finished. Long bars are the keys costing you speed.</p>
-  <div class="chart">
-    <div id="keysChart"></div>
-    <div class="tip" id="keysTip"></div>
-  </div>
-  <button class="linkish" id="keysTableBtn">Show the numbers</button>
+  <div class="chart"><div id="keysChart"></div><div class="tip" id="keysTip"></div></div>
+  <button class="linkish" id="keysTableBtn" style="margin-top:16px">Show the numbers</button>
   <div id="keysTable" hidden></div>
+ </div>
 </section>
 
-<section>
+<section class="band band-light">
+ <div class="wrap">
   <h2>Achievements</h2>
   <p class="sub" id="achSub"></p>
   <div class="ach" id="allAch"></div>
+  <footer style="margin-top:56px">
+    <span>Everything stays in this browser. No account, no server, no analytics.</span>
+    <span class="spacer"></span>
+    <button class="linkish" id="exportBtn">Export CSV</button>
+    <button class="linkish" id="exportJsonBtn">Export JSON</button>
+    <button class="linkish" id="resetBtn">Erase my data</button>
+  </footer>
+ </div>
 </section>
 
-<footer>
-  <span>Everything stays in this browser. No account, no server, no analytics.</span>
-  <span class="spacer"></span>
-  <button class="linkish" id="exportBtn">Export CSV</button>
-  <button class="linkish" id="exportJsonBtn">Export JSON</button>
-  <button class="linkish" id="resetBtn">Erase my data</button>
-</footer>
-
-</div>
 <div class="toast" id="toast"></div>
 <script>
 (function(){

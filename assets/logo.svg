@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512" role="img" aria-label="braintempo">
+  <title>braintempo</title>
+  <!-- Apple-style rounded tile in Action Blue #0066cc -->
+  <rect width="512" height="512" rx="114" ry="114" fill="#0066cc"/>
+  <!-- Five keystroke bars on a common baseline: the tempo of typing,
+       with the tallest doubling as a text caret. -->
+  <g fill="#ffffff">
+    <rect x="104" y="272" width="44" height="100" rx="22" opacity=".5"/>
+    <rect x="168" y="192" width="44" height="180" rx="22" opacity=".72"/>
+    <rect x="232" y="122" width="44" height="250" rx="22"/>
+    <rect x="296" y="222" width="44" height="150" rx="22" opacity=".72"/>
+    <rect x="360" y="282" width="44" height="90"  rx="22" opacity=".5"/>
+  </g>
+  <!-- baseline: the thing every reading is measured against -->
+  <rect x="104" y="398" width="300" height="12" rx="6" fill="#ffffff" opacity=".45"/>
+</svg>
